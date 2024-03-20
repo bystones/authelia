@@ -15,7 +15,6 @@ import (
 
 	"github.com/authelia/authelia/v4/internal/middlewares"
 	"github.com/authelia/authelia/v4/internal/oidc"
-	"github.com/authelia/authelia/v4/internal/utils"
 )
 
 // OpenIDConnectUserinfo handles GET/POST requests to the OpenID Connect 1.0 UserInfo endpoint.
@@ -87,22 +86,7 @@ func OpenIDConnectUserinfo(ctx *middlewares.AutheliaCtx, rw http.ResponseWriter,
 		return
 	}
 
-	delete(claims, oidc.ClaimJWTID)
-	delete(claims, oidc.ClaimSessionID)
-	delete(claims, oidc.ClaimAccessTokenHash)
-	delete(claims, oidc.ClaimCodeHash)
-	delete(claims, oidc.ClaimExpirationTime)
-	delete(claims, oidc.ClaimNonce)
-
-	audience, ok := claims[oidc.ClaimAudience].([]string)
-
-	if !ok || len(audience) == 0 {
-		audience = []string{client.GetID()}
-	} else if !utils.IsStringInSlice(clientID, audience) {
-		audience = append(audience, clientID)
-	}
-
-	claims[oidc.ClaimAudience] = audience
+	oidcApplyUserInfoClaims(ctx, client, clientID, claims)
 
 	var token string
 
