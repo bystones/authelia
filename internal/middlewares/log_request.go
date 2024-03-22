@@ -1,6 +1,9 @@
 package middlewares
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/valyala/fasthttp"
 )
 
@@ -11,8 +14,24 @@ func LogRequest(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 		log.Trace("Request hit")
 
+		var headers []string
+
+		ctx.Request.Header.VisitAll(func(key, value []byte) {
+			headers = append(headers, fmt.Sprintf("%s=%s", key, value))
+		})
+
+		log.WithField("headers", strings.Join(headers, " ")).Trace("Request Headers")
+
 		next(ctx)
 
 		log.Tracef("Replied (status=%d)", ctx.Response.StatusCode())
+
+		headers = []string{}
+
+		ctx.Response.Header.VisitAll(func(key, value []byte) {
+			headers = append(headers, fmt.Sprintf("%s=%s", key, value))
+		})
+
+		log.WithField("headers", strings.Join(headers, " ")).Trace("Response Headers")
 	}
 }
